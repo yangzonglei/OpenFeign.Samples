@@ -10,10 +10,10 @@
 dotnet add package Yzl.Extensions.Http.OpenFeign
 ```
 
-当前 demo 在仓库内使用 `ProjectReference` 引用源码：
+当前 demo 在仓库内引用：
 
 ```xml
-<ProjectReference Include="../../../../dotnet-extensions/src/Yzl.Extensions.Http.OpenFeign/Yzl.Extensions.Http.OpenFeign.csproj" />
+<PackageReference Include="Yzl.Extensions.Http.OpenFeign" Version="0.1.16" />
 ```
 
 ### 2. 注册 OpenFeign
@@ -70,10 +70,10 @@ For a standalone application:
 dotnet add package Yzl.Extensions.Http.OpenFeign
 ```
 
-Inside this repository, the demo uses a source `ProjectReference`:
+Inside this repository, the demo uses :
 
 ```xml
-<ProjectReference Include="../../../../dotnet-extensions/src/Yzl.Extensions.Http.OpenFeign/Yzl.Extensions.Http.OpenFeign.csproj" />
+<PackageReference Include="Yzl.Extensions.Http.OpenFeign" Version="0.1.16" />
 ```
 
 ### 2. Register OpenFeign
