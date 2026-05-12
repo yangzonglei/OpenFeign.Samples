@@ -1,0 +1,180 @@
+using System.Text;
+using NLog.Web;
+using OpenFeign.Samples.Client.Clients;
+using OpenFeign.Samples.Client.Models;
+using Yzl.Extensions.Http.OpenFeign;
+using Yzl.Extensions.Http.OpenFeign.Serializer;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Logging.ClearProviders();
+builder.Host.UseNLog();
+
+builder.WebHost.UseUrls("http://localhost:17008");
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddFeignStarter(builder.Configuration, options =>
+{
+    options.SerializerType = typeof(SystemTextJsonFeignSerializer);
+});
+
+var app = builder.Build();
+
+app.MapGet("/", () => new
+{
+    message = "Yzl.Extensions.Http.OpenFeign Samples Client",
+    endpoints = new[] { "/demo/basic", "/demo/methods", "/demo/body", "/demo/advanced", "/demo/sse", "/read-all" }
+});
+
+app.MapGet("/demo/basic", async (IDemoFeignClient client) => new
+{
+    get = await client.GetById(1),
+    getSync = client.GetByIdSync(2),
+    query = await client.Query(3, "Tom"),
+    queryMap = await client.QueryMap(new Dictionary<string, string>
+    {
+        ["age"] = "18",
+        ["city"] = "Shanghai"
+    }),
+    create = await client.Create(new CreateUserRequest("Jerry", 20, "Hangzhou")),
+    update = await client.Update(4, new UpdateUserRequest("Bob", 30, "Shenzhen")),
+    delete = await client.Delete(4)
+});
+
+app.MapGet("/demo/methods", async (IDemoFeignClient client) =>
+{
+    await client.Head();
+
+    return new
+    {
+        patch = await client.Patch(5, new Dictionary<string, object?>
+        {
+            ["name"] = "Patch User",
+            ["city"] = "Beijing"
+        }),
+        head = "completed",
+        options = await client.Options(),
+        trace = await client.Trace()
+    };
+});
+
+app.MapGet("/demo/body", async (IRequestBodyDemoFeignClient client) =>
+{
+    await using var stream = new MemoryStream(Encoding.UTF8.GetBytes("stream body demo"));
+
+    return new
+    {
+        objectBody = await client.SendObject(new CreateUserRequest("Body User", 28, "Guangzhou")),
+        stringBody = await client.SendString("plain string body"),
+        bytesBody = await client.SendBytes(Encoding.UTF8.GetBytes("byte array body")),
+        streamBody = await client.SendStream(stream),
+        httpContentBody = await client.SendHttpContent(IRequestBodyDemoFeignClient.CreateJsonContent("{\"name\":\"http-content\"}"))
+    };
+});
+
+app.MapGet("/demo/advanced", async (IDemoFeignClient client) => new
+{
+    headers = await client.Headers("token-from-parameter"),
+    rawFormatFalse = await client.GetWrappedData(6),
+    rawFormatTrue = await client.GetWrappedRaw(7),
+    customResolver = await client.GetStatusResult(8),
+    timeoutFallback = client.TimeoutWithFallback()
+});
+
+app.MapGet("/demo/sse", async (ISseDemoFeignClient client, CancellationToken cancellationToken) =>
+{
+    var events = new List<SseEventDto>();
+
+    await foreach (var item in client.StreamAsAsyncEnumerable().WithCancellation(cancellationToken))
+    {
+        events.Add(item);
+    }
+
+    var streamEvents = new List<SseEventDto>();
+    var stream = client.StreamAsSseStream();
+    await stream.SubscribeAsync(item =>
+    {
+        streamEvents.Add(item);
+        return Task.CompletedTask;
+    }, cancellationToken);
+
+    return new
+    {
+        asyncEnumerable = events,
+        sseStream = streamEvents,
+        stream.IsClosed
+    };
+});
+
+app.MapGet("/read-all", async (IDemoFeignClient demoClient, IRequestBodyDemoFeignClient bodyClient, ISseDemoFeignClient sseClient, CancellationToken cancellationToken) =>
+{
+    await using var stream = new MemoryStream(Encoding.UTF8.GetBytes("stream body demo"));
+
+    var events = new List<SseEventDto>();
+    await foreach (var item in sseClient.StreamAsAsyncEnumerable().WithCancellation(cancellationToken))
+    {
+        events.Add(item);
+    }
+
+    var streamEvents = new List<SseEventDto>();
+    var sseStream = sseClient.StreamAsSseStream();
+    await sseStream.SubscribeAsync(item =>
+    {
+        streamEvents.Add(item);
+        return Task.CompletedTask;
+    }, cancellationToken);
+
+    await demoClient.Head();
+
+    return new
+    {
+        basic = new
+        {
+            get = await demoClient.GetById(1),
+            getSync = demoClient.GetByIdSync(2),
+            query = await demoClient.Query(3, "Tom"),
+            queryMap = await demoClient.QueryMap(new Dictionary<string, string>
+            {
+                ["age"] = "18",
+                ["city"] = "Shanghai"
+            }),
+            create = await demoClient.Create(new CreateUserRequest("Jerry", 20, "Hangzhou")),
+            update = await demoClient.Update(4, new UpdateUserRequest("Bob", 30, "Shenzhen")),
+            delete = await demoClient.Delete(4)
+        },
+        methods = new
+        {
+            patch = await demoClient.Patch(5, new Dictionary<string, object?>
+            {
+                ["name"] = "Patch User",
+                ["city"] = "Beijing"
+            }),
+            head = "completed",
+            options = await demoClient.Options(),
+            trace = await demoClient.Trace()
+        },
+        body = new
+        {
+            objectBody = await bodyClient.SendObject(new CreateUserRequest("Body User", 28, "Guangzhou")),
+            stringBody = await bodyClient.SendString("plain string body"),
+            bytesBody = await bodyClient.SendBytes(Encoding.UTF8.GetBytes("byte array body")),
+            streamBody = await bodyClient.SendStream(stream),
+            httpContentBody = await bodyClient.SendHttpContent(IRequestBodyDemoFeignClient.CreateJsonContent("{\"name\":\"http-content\"}"))
+        },
+        advanced = new
+        {
+            headers = await demoClient.Headers("token-from-parameter"),
+            rawFormatFalse = await demoClient.GetWrappedData(6),
+            rawFormatTrue = await demoClient.GetWrappedRaw(7),
+            customResolver = await demoClient.GetStatusResult(8),
+            timeoutFallback = demoClient.TimeoutWithFallback()
+        },
+        sse = new
+        {
+            asyncEnumerable = events,
+            sseStream = streamEvents,
+            sseStream.IsClosed
+        }
+    };
+});
+
+app.Run();

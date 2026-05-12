@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{C975AD21-7537-4F0C-9B8E-9C70165426FC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenFeign.Samples.Api", "src\OpenFeign.Samples.Api\OpenFeign.Samples.Api.csproj", "{70CE7D12-D413-48F2-A374-150AE45533AB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenFeign.Samples.Client", "src\OpenFeign.Samples.Client\OpenFeign.Samples.Client.csproj", "{B537D42D-E0CE-4678-976C-1C36A18639BD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{70CE7D12-D413-48F2-A374-150AE45533AB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{70CE7D12-D413-48F2-A374-150AE45533AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{70CE7D12-D413-48F2-A374-150AE45533AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{70CE7D12-D413-48F2-A374-150AE45533AB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B537D42D-E0CE-4678-976C-1C36A18639BD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B537D42D-E0CE-4678-976C-1C36A18639BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B537D42D-E0CE-4678-976C-1C36A18639BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B537D42D-E0CE-4678-976C-1C36A18639BD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{70CE7D12-D413-48F2-A374-150AE45533AB} = {C975AD21-7537-4F0C-9B8E-9C70165426FC}
+		{B537D42D-E0CE-4678-976C-1C36A18639BD} = {C975AD21-7537-4F0C-9B8E-9C70165426FC}
+	EndGlobalSection
+EndGlobal
