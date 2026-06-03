@@ -12,17 +12,14 @@ builder.Host.UseNLog();
 
 builder.WebHost.UseUrls("http://localhost:17008");
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddFeignStarter(builder.Configuration, options =>
-{
-    options.SerializerType = typeof(SystemTextJsonFeignSerializer);
-});
+builder.Services.AddFeignStarter(builder.Configuration, options => { options.SerializerType = typeof(SystemTextJsonFeignSerializer); });
 
 var app = builder.Build();
 
 app.MapGet("/", () => new
 {
     message = "Yzl.Extensions.Http.OpenFeign Samples Client",
-    endpoints = new[] { "/demo/basic", "/demo/methods", "/demo/body", "/demo/advanced", "/demo/sse", "/read-all" }
+    endpoints = new[] {"/demo/basic", "/demo/methods", "/demo/body", "/demo/advanced", "/demo/sse", "/read-all", "download-async", "download-sync", "download-bytes"}
 });
 
 app.MapGet("/demo/basic", async (IDemoFeignClient client) => new
@@ -103,6 +100,32 @@ app.MapGet("/demo/sse", async (ISseDemoFeignClient client, CancellationToken can
         sseStream = streamEvents,
         stream.IsClosed
     };
+});
+
+app.MapGet("download-async", async (IDownloadClient downloadClient, CancellationToken cancellationToken) =>
+{
+    await using var stream = await downloadClient.DownloadAsync();
+    using var reader = new StreamReader(stream);
+    var content = await reader.ReadToEndAsync(cancellationToken);
+
+    return content;
+});
+
+app.MapGet("download-sync", (IDownloadClient downloadClient, CancellationToken cancellationToken) =>
+{
+    using var stream = downloadClient.Download();
+    using var reader = new StreamReader(stream);
+    var content = reader.ReadToEnd();
+
+    return content;
+});
+
+app.MapGet("download-bytes", async (IDownloadClient downloadClient, CancellationToken cancellationToken) =>
+{
+    var bytes = await downloadClient.DownloadBytesAsync();
+    var content = System.Text.Encoding.UTF8.GetString(bytes);
+
+    return content;
 });
 
 app.MapGet("/read-all", async (IDemoFeignClient demoClient, IRequestBodyDemoFeignClient bodyClient, ISseDemoFeignClient sseClient, CancellationToken cancellationToken) =>

@@ -21,29 +21,51 @@
 ## 2. 总体架构图
 
 ```mermaid
-flowchart TB
+flowchart LR
+    %% ===== 样式 =====
+    classDef app fill:#f6f8fa,stroke:#57606a,stroke-width:1px,color:#24292f;
+    classDef core fill:#ddf4ff,stroke:#0969da,stroke-width:1.5px,color:#24292f;
+    classDef detail fill:#ffffff,stroke:#8c959f,stroke-width:1px,color:#24292f;
+    classDef executor fill:#dafbe1,stroke:#1a7f37,stroke-width:1.5px,color:#24292f;
+    classDef response fill:#fff8c5,stroke:#9a6700,stroke-width:1.5px,color:#24292f;
+    classDef infra fill:#fbefff,stroke:#8250df,stroke-width:1.2px,color:#24292f;
+    classDef remote fill:#ffebe9,stroke:#cf222e,stroke-width:1.2px,color:#24292f;
+
+    %% ===== 使用方 =====
     subgraph UserApp["使用方应用"]
-        ServiceCollection["IServiceCollection<br/>调用 AddFeignStarter"]
-        FeignInterface["Feign Client Interface<br/>[FeignClient]<br/>[Get]/[Post]/[RequestParam]/[RequestBody]/[Sse]"]
-        Caller["业务代码<br/>注入并调用 Feign 接口"]
+        direction TB
+        ServiceCollection["IServiceCollection<br/>AddFeignStarter"]
+        FeignInterface["Feign Client Interface<br/>[FeignClient] / [Get] / [Post] / [Sse]"]
+        Caller["业务代码<br/>注入并调用接口"]
+        ServiceCollection -.注册.-> FeignInterface
+        Caller -.调用.-> FeignInterface
     end
 
+    %% ===== OpenFeign 主链路 =====
     subgraph OpenFeign["Yzl.Extensions.Http.OpenFeign"]
-        subgraph Registration["注册与扫描"]
+        direction LR
+
+        subgraph Registration["① 注册与扫描"]
+            direction TB
             Extensions["FeignClientExtensions<br/>注册入口"]
             Scanner["App / AssemblyScanner<br/>扫描程序集"]
-            Descriptor["FeignClientDescriptor<br/>Feign Client 描述信息"]
+            Descriptor["FeignClientDescriptor<br/>Client 描述信息"]
             Factory["FeignClientFactory<br/>注册 HttpClient 与代理"]
             Warmup["FeignClientWarmupHostedService<br/>启动预热"]
-            WarmupCache["FeignClientWarmupCache<br/>预热 HttpClient 缓存"]
+            WarmupCache["FeignClientWarmupCache<br/>HttpClient 缓存"]
+            Extensions --> Scanner --> Descriptor --> Factory
+            Extensions --> Warmup --> WarmupCache
         end
 
-        subgraph ProxyLayer["代理与拦截"]
+        subgraph ProxyLayer["② 代理与拦截"]
+            direction TB
             Proxy["Castle DynamicProxy<br/>接口代理对象"]
             Interceptor["FeignClientInterceptor<br/>拦截方法调用"]
+            Proxy --> Interceptor
         end
 
-        subgraph RequestBuild["请求构建"]
+        subgraph RequestBuild["③ 请求构建"]
+            direction TB
             RequestContext["FeignRequestContext<br/>一次请求上下文"]
             ParameterContext["ParameterContext<br/>参数处理上下文"]
             ParamProcessor["ParameterProcessor<br/>执行参数处理"]
@@ -51,108 +73,104 @@ flowchart TB
             PayloadResolvers["ParameterPayloadResolverRegistry<br/>参数 Resolver"]
             Strategies["ParameterStrategyRegistry<br/>参数 Strategy"]
             Headers["FeignRequestHeaderProviderRegistry<br/>全局 Header Provider"]
+            RequestContext --> ParameterContext --> ParamProcessor
+            ParamProcessor --> Metadata
+            Metadata --> PayloadResolvers
+            ParamProcessor --> Strategies
+            RequestContext --> Headers
         end
 
-        subgraph Execution["执行器调度"]
+        subgraph Execution["④ 执行器调度"]
+            direction TB
             Dispatcher["RequestExecutorDispatcher<br/>按 Order 选择执行器"]
             HttpExecutor["HttpExecutor<br/>普通 HTTP 请求"]
             SseExecutor["SseExecutor<br/>SSE 请求"]
+            Dispatcher --> HttpExecutor
+            Dispatcher --> SseExecutor
         end
 
-        subgraph Response["响应处理"]
-            ResponseAttribute["FeignResponseAttribute<br/>方法/接口级解析器声明"]
-            IResponseResolver["IFeignResponseResolver<br/>响应解析器接口"]
+        subgraph Response["⑤ 响应处理"]
+            direction TB
+            ResponseAttribute["FeignResponseAttribute<br/>方法 / 接口级声明"]
             ResponseResolverProvider["FeignResponseResolverProvider<br/>选择响应解析器"]
-            CustomResolver["自定义 ResponseResolver<br/>业务响应格式扩展"]
-            GlobalResolver["Global ResponseResolver<br/>IsGlobal + Order"]
-            DefaultResolver["DefaultFeignResponseResolver<br/>默认 code/data 响应解析"]
+            IResponseResolver["IFeignResponseResolver<br/>解析器接口"]
+            CustomResolver["自定义 Resolver"]
+            GlobalResolver["Global Resolver<br/>IsGlobal + Order"]
+            DefaultResolver["DefaultFeignResponseResolver<br/>默认 code/data 解析"]
             SerializerProvider["FeignSerializerProvider<br/>选择序列化器"]
             SystemTextJson["SystemTextJsonFeignSerializer"]
             Newtonsoft["NewtonsoftFeignSerializer"]
             FileDownload["文件下载响应<br/>Stream / byte[]"]
-            ResponseStream["HttpResponseMessageStream<br/>绑定 Stream 与响应生命周期"]
+            ResponseStream["HttpResponseMessageStream<br/>绑定响应生命周期"]
+            ResponseAttribute --> ResponseResolverProvider --> IResponseResolver
+            IResponseResolver --> CustomResolver
+            IResponseResolver --> GlobalResolver
+            IResponseResolver --> DefaultResolver
+            ResponseResolverProvider --> SerializerProvider
+            SerializerProvider --> SystemTextJson
+            SerializerProvider --> Newtonsoft
+            FileDownload --> ResponseStream
         end
 
-        subgraph SseFlow["SSE 流处理"]
-            SseEngine["SseClientEngine<br/>SSE 连接与重连"]
+        subgraph SseFlow["⑥ SSE 流处理"]
+            direction TB
+            SseEngine["SseClientEngine<br/>连接与重连"]
             SseDecoder["SseDecoder<br/>解析 event-stream"]
             SseStream["FeignSseStream<br/>订阅式消费"]
+            SseEngine --> SseDecoder --> SseStream
         end
     end
 
+    %% ===== 基础设施与远程服务 =====
     subgraph DotNet[".NET 基础设施"]
+        direction TB
         DI["Microsoft.Extensions.DependencyInjection"]
         HttpClientFactory["IHttpClientFactory"]
         Resilience["Microsoft.Extensions.Http.Resilience<br/>Timeout / Retry / CircuitBreaker / Hedging"]
         HttpClient["HttpClient"]
         SocketsHandler["SocketsHttpHandler<br/>连接池 / KeepAlive"]
+        DI --> HttpClientFactory --> HttpClient
+        Resilience --> HttpClient
+        SocketsHandler --> HttpClient
     end
 
     subgraph Remote["远程服务"]
+        direction TB
         HttpApi["HTTP API"]
         SseApi["SSE Endpoint"]
     end
 
-    ServiceCollection --> Extensions
-    Extensions --> Scanner
-    Scanner --> Descriptor
-    Descriptor --> Factory
-    Extensions --> Warmup
+    %% ===== 主链路：只保留跨模块关键流向，降低线条交叉 =====
+    ServiceCollection ==> Extensions
+    FeignInterface ==> Proxy
+    Factory ==> Proxy
+    Warmup -.预热.-> HttpClientFactory
+    Interceptor ==> RequestContext
+    Headers -.追加 Header.-> Dispatcher
+    ParamProcessor ==> Dispatcher
+    HttpExecutor ==> ResponseResolverProvider
+    HttpExecutor ==> SerializerProvider
+    HttpExecutor ==> FileDownload
+    SseExecutor ==> SseEngine
 
-    Factory --> DI
-    Factory --> HttpClientFactory
-    Factory --> Resilience
-    Factory --> SocketsHandler
-    Factory --> Proxy
+    %% ===== 外部依赖 =====
+    Factory -.注册.-> DI
+    Factory -.配置.-> HttpClientFactory
+    Factory -.配置.-> Resilience
+    Factory -.配置.-> SocketsHandler
+    HttpExecutor ==> HttpClient
+    SseEngine ==> HttpClient
+    HttpClient ==> HttpApi
+    HttpClient ==> SseApi
 
-    Warmup --> HttpClientFactory
-    Warmup --> WarmupCache
-    Warmup --> Proxy
-
-    Caller --> FeignInterface
-    FeignInterface --> Proxy
-    Proxy --> Interceptor
-
-    Interceptor --> RequestContext
-    Interceptor --> ParameterContext
-    Interceptor --> ParamProcessor
-    ParamProcessor --> Metadata
-    Metadata --> PayloadResolvers
-    ParamProcessor --> Strategies
-    Interceptor --> Headers
-    Interceptor --> Dispatcher
-
-    Dispatcher --> HttpExecutor
-    Dispatcher --> SseExecutor
-
-    HttpExecutor --> HttpClient
-    HttpExecutor --> ResponseResolverProvider
-    FeignInterface --> ResponseAttribute
-    ResponseAttribute --> ResponseResolverProvider
-    ResponseResolverProvider --> IResponseResolver
-    IResponseResolver --> CustomResolver
-    IResponseResolver --> GlobalResolver
-    IResponseResolver --> DefaultResolver
-    ResponseResolverProvider --> CustomResolver
-    ResponseResolverProvider --> GlobalResolver
-    ResponseResolverProvider --> DefaultResolver
-    HttpExecutor --> SerializerProvider
-    SerializerProvider --> SystemTextJson
-    SerializerProvider --> Newtonsoft
-    HttpExecutor --> FileDownload
-    FileDownload --> ResponseStream
-
-    SseExecutor --> SseEngine
-    SseExecutor --> SseStream
-    SseEngine --> SseDecoder
-    SseEngine --> HttpClient
-
-    HttpClientFactory --> HttpClient
-    Resilience --> HttpClient
-    SocketsHandler --> HttpClient
-
-    HttpClient --> HttpApi
-    HttpClient --> SseApi
+    %% ===== 分类上色 =====
+    class ServiceCollection,FeignInterface,Caller app;
+    class Extensions,Scanner,Descriptor,Factory,Warmup,WarmupCache,Proxy,Interceptor,RequestContext,ParameterContext,ParamProcessor,Metadata,PayloadResolvers,Strategies,Headers core;
+    class Dispatcher,HttpExecutor,SseExecutor executor;
+    class ResponseAttribute,ResponseResolverProvider,IResponseResolver,CustomResolver,GlobalResolver,DefaultResolver,SerializerProvider,SystemTextJson,Newtonsoft,FileDownload,ResponseStream response;
+    class SseEngine,SseDecoder,SseStream executor;
+    class DI,HttpClientFactory,Resilience,HttpClient,SocketsHandler infra;
+    class HttpApi,SseApi remote;
 ```
 
 ## 3. 模块职责图
