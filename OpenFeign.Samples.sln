@@ -9,6 +9,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenFeign.Samples.Api", "sr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenFeign.Samples.Client", "src\OpenFeign.Samples.Client\OpenFeign.Samples.Client.csproj", "{B537D42D-E0CE-4678-976C-1C36A18639BD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenFeign.AOT.Samples.Client", "src\OpenFeign.AOT.Samples.Client\OpenFeign.AOT.Samples.Client.csproj", "{A254EB85-6791-4FF9-8FB7-D21312E7CA25}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Models", "src\Models\Models.csproj", "{FC91167A-3295-4AA0-B984-307302346E2B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,9 +30,19 @@ Global
 		{B537D42D-E0CE-4678-976C-1C36A18639BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B537D42D-E0CE-4678-976C-1C36A18639BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B537D42D-E0CE-4678-976C-1C36A18639BD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A254EB85-6791-4FF9-8FB7-D21312E7CA25}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A254EB85-6791-4FF9-8FB7-D21312E7CA25}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A254EB85-6791-4FF9-8FB7-D21312E7CA25}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A254EB85-6791-4FF9-8FB7-D21312E7CA25}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FC91167A-3295-4AA0-B984-307302346E2B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC91167A-3295-4AA0-B984-307302346E2B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC91167A-3295-4AA0-B984-307302346E2B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC91167A-3295-4AA0-B984-307302346E2B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{70CE7D12-D413-48F2-A374-150AE45533AB} = {C975AD21-7537-4F0C-9B8E-9C70165426FC}
 		{B537D42D-E0CE-4678-976C-1C36A18639BD} = {C975AD21-7537-4F0C-9B8E-9C70165426FC}
+		{A254EB85-6791-4FF9-8FB7-D21312E7CA25} = {C975AD21-7537-4F0C-9B8E-9C70165426FC}
+		{FC91167A-3295-4AA0-B984-307302346E2B} = {C975AD21-7537-4F0C-9B8E-9C70165426FC}
 	EndGlobalSection
 EndGlobal
