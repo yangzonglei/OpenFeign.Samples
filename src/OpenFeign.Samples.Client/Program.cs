@@ -1,7 +1,7 @@
 using System.Text;
 using NLog.Web;
 using OpenFeign.Samples.Client.Clients;
-using OpenFeign.Samples.Client.Models;
+using Models;
 using Yzl.Extensions.Http.OpenFeign;
 using Yzl.Extensions.Http.OpenFeign.Serializer;
 

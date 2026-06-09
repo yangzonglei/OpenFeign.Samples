@@ -1,5 +1,5 @@
 using OpenFeign.Samples.Client.Clients;
-using OpenFeign.Samples.Client.Models;
+using Models;
 
 namespace OpenFeign.Samples.Client.Fallbacks;
 

@@ -1,3 +1,3 @@
-namespace OpenFeign.Samples.Client.Models;
+namespace Models;
 
 public sealed record SseEventDto(int Index, string Message, bool CompleteSucc = false);

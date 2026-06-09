@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using OpenFeign.Samples.Api.Models;
+using Models;
 
 namespace OpenFeign.Samples.Api.Controllers;
 

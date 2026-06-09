@@ -3,7 +3,7 @@ using NLog.Web;
 using OpenFeignAot.Samples.Client.Clients;
 using OpenFeign.AOT.Samples.Client.HeaderProviders;
 
-using OpenFeign.AOT.Samples.Client.Models;
+using Models;
 using OpenFeign.AOT.Samples.Client.Resolvers;
 using Yzl.Extensions.Http.OpenFeign;
 

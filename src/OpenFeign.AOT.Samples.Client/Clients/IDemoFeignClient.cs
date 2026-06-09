@@ -1,5 +1,5 @@
 using OpenFeign.AOT.Samples.Client.Fallbacks;
-using OpenFeign.AOT.Samples.Client.Models;
+using Models;
 using Yzl.Extensions.Http.OpenFeign.Attributes;
 using Yzl.Extensions.Http.OpenFeign.Attributes.Methods;
 
