@@ -1,5 +1,17 @@
 # Yzl.Extensions.Http.OpenFeign 更新日志
 
+## v0.1.18 [2026/06/10]
+
+### 更新内容（本次无新增功能，只做框架升级）
+
+1. 新增 `Yzl.Extensions.Http.OpenFeign.Abstractions` 公共抽象项目，用于承载运行时代理和 AOT OpenFeign 共用的契约、特性、异常、序列化接口、请求头接口以及 SSE 类型
+2. 将 `FeignClient`、请求映射、参数绑定、SSE 等公共特性从运行时代理包与 AOT 包中抽离到 Abstractions 项目，避免两套实现重复定义基础类型
+3. 将 `IFeignClientRegistration`、`IOrdered`、`IFeignSerializer`、`IFeignRequestHeaderProvider`、`FeignClientException`、`ISseStream` 等公共接口和类型统一迁移到 Abstractions 项目，便于后续扩展和复用
+4. 为运行时代理包和 AOT 包增加对 Abstractions 项目的引用，保持两种 OpenFeign 实现使用同一套公共 API
+5. 调整 AOT 源生成器和示例项目的引用与命名空间，适配公共抽象层拆分后的项目结构
+
+---
+
 ## v0.1.17 [2026/06/03]
 
 ### 更新内容
